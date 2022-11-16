@@ -11,7 +11,7 @@ Here, we present an alternative formation of this game, in which you, the human 
 1. **ur_moveit_config**
     * The ur_moveit_config package contains the simplest possible MoveIt configuration for a Universal Robots UR3 manipulator developed using the MoveIt Setup Assistant. It depends on UR-provided packages which can be found at the [Universal Robots ROS Drivers](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver) page.
 2. **ur_scripts**
-    * The ur_scripts package contains the Python code used to make the robot execute operations. Similar executable movement scripts can be easily created within this package.
+    * The ur_scripts package contains the Python code used to make the robot execute operations. In order for the scripts to properly execute, one must be using the same experimental setup (1 UR3 robot arm, 1 Intel RealSense D435i camera + end effector, 3 Red Shells, 1 Green Marking on a Shell)
 ---
 
 ## Requirements, Dependencies, and Building
@@ -54,18 +54,7 @@ source devel/setup.bash
 ```
 ---
 
-## Running Our Demo
-To run our demo using RViz in a purely virtual environment, start by sourcing the workspace. Then run:
-```console
-roslaunch ur_moveit_config demo.launch
-```
-Open and source another terminal, then run:
-```console
-rosrun ur_scripts calculator.py
-```
-This will begin 
-
 ## Demo with Real UR3
-Here is
+Here is the demo! :)
 
 ---
