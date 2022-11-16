@@ -149,6 +149,18 @@ class ShellGame(object):
         move_group.go(joint_goal, wait=True)
         move_group.stop()
         
+    def look_to_camera(self):
+        move_group = self.move_group
+        joint_goal = move_group.get_current_joint_values()
+        joint_goal[0] = -1.5708563963519495
+        joint_goal[1] = -1.9903510252581995
+        joint_goal[2] = -1.546737019215719
+        joint_goal[3] = 1.1759093443499964
+        joint_goal[4] = 1.5703076124191284
+        joint_goal[5] = -2.296692434941427
+        move_group.go(joint_goal, wait=True)
+        move_group.stop()
+        
     def move_left_goal(self, control):
         move_group = self.move_group
         wpose = move_group.get_current_pose().pose
@@ -338,6 +350,7 @@ class ShellGame(object):
     # ##########################################################################
     # Finds and localizes all bowls within scene
     def scan_for_objects(self, pipeline, target_number):
+        # needs to be completed
         continue_flag = True
         triggerTime = time.time()
         startTime = time.time()
@@ -346,48 +359,47 @@ class ShellGame(object):
             frames = pipeline.wait_for_frames()
             depth_frame = frames.get_depth_frame()
             color_frame = frames.get_color_frame()
-            
+
             # Convert images to numpy arrays
             depth_image = np.asanyarray(depth_frame.get_data())
             color_image = np.asanyarray(color_frame.get_data())
-            
+
             # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
             depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
             depth_colormap_dim = depth_colormap.shape
             color_colormap_dim = color_image.shape
-            
-            # Only process new images every defined interval to prevent overflow
+
             start = time.time()
             if (start-triggerTime >= 0.1):
-                colfil1 = np.array([0, 0, 100])
-                colfil2 = np.array([80, 80, 255]) #currently red
+                colfil1 = np.array([0, 0, 80])
+                colfil2 = np.array([60, 60, 255]) #currently red
                 mask = cv2.inRange(color_image, colfil1, colfil2)
                 color_mask = cv2.bitwise_and(color_image,color_image, mask= mask)
                 cv2.addWeighted(color_mask, 1, color_image, 1, 0, color_image)
                 contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                
+
                 lmList = [300, 250]
-                
+
                 # All contours detected
                 bounded_contours = []
                 for pic, contour in enumerate(contours): # extend this to create matrix or lists, track initial positon to estimate location in scene and store objects
                     # if counter == 0:
                     area = cv2.contourArea(contour)
-                    if (area > 500):
+                    if (area > 5000):
                         x, y, w, h = cv2.boundingRect(contour)
                         # cv2.rectangle(qcolor_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
                         lmList = [int(x + w/2), int(y + h/2)]
-                        
+
                         bounded_contours.append([x, y, w, h])
-                
+
                 final_contours = []
-                
+
                 # Creating contour check dictionary
                 contour_check = {}     
                 for i in range(len(bounded_contours)):
                     contour_check[i] = True
-                
-                # Looking for overlaps in contours and creating largest possible contour to contain all
+
+                # Looking for overlaps in contours
                 for i in range(len(bounded_contours)):
                     if contour_check[i] == True:
                         current_box = bounded_contours[i]
@@ -403,8 +415,8 @@ class ShellGame(object):
                                     current_box[3] = bounded_contours[j][1] + bounded_contours[j][3] - current_box[1]
                                 contour_check[j] = False
                         final_contours.append(current_box)
-                
-                # remove any fully encircled contours
+
+                # remove any encircled contours
                 final_contours2 = []
                 for i in range(len(final_contours)):
                     for j in range(len(final_contours)):
@@ -412,9 +424,10 @@ class ShellGame(object):
                             final_contours2.append(final_contours[j])
 
                 final_contours = final_contours2
+
                 largest_contours = final_contours2
 
-                # Selecting three largest regions
+                # Selecting three largest regions (put in if statement to see if we have more than three contours)
                 largest_areas = [0, 0, 0]
                 largest_contours = [[], [], []]
                 for contour in bounded_contours:
@@ -427,12 +440,11 @@ class ShellGame(object):
                     elif (contour[2] * contour[3]) > largest_areas[0]:
                         largest_areas[0] = contour[2] * contour[3]
                         largest_contours[0] = contour
-                
+
                 # storing positions
                 stored_pixels = []
                 stored_positions = []
 
-                # drawing boxes around each contour and scaling pixels to estimate position of each
                 for contour in largest_contours:
                     try:
                         cv2.rectangle(color_image, (contour[0], contour[1]), (contour[0] + contour[2], contour[1] + contour[3]), (255, 0, 0), 2)
@@ -440,19 +452,27 @@ class ShellGame(object):
                         stored_positions.append([round((contour[0] + contour[2]//2 - 320) * 0.33/640, 2), round(-1 * (contour[1] + contour[3]//2 - 240) * 0.33/640, 2)])
                     except IndexError:
                         pass
-                
-                # allow time for aliases to disperse, then return once stable  
+
                 if time.time() - startTime >= waitTime and len(stored_positions) == 3:
                     return stored_positions
-                        
+
+
+                # for contour in bounded_contours:
+                try:
+                    for contour in largest_contours:
+                        cv2.rectangle(color_image, (contour[0], contour[1]), (contour[0] + contour[2], contour[1] + contour[3]), (255, 0, 0), 2)
+                except IndexError:
+                    pass
+
                 bounds = [295, 245, 305, 255]
+                depth_limits = [-0.01, 0.01]
                 cv2.rectangle(color_image, (bounds[0], bounds[1]), (bounds[2], bounds[3]), (0, 255, 0), 2)
 
                 cv2.imshow("Video",color_image)
                 cv2.waitKey(1)
-                
+
                 triggerTime = time.time()
-                
+
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
     
@@ -494,8 +514,8 @@ class ShellGame(object):
             # Take in new camera frame
             # start = time.time()
             # if (start-triggerTime >= 0.1):
-            colfil1 = np.array([0, 50, 0])
-            colfil2 = np.array([120, 255, 50]) #currently green
+            colfil1 = np.array([50, 50, 0])
+            colfil2 = np.array([200, 255, 20]) #currently green
             mask = cv2.inRange(color_image, colfil1, colfil2)
             color_mask = cv2.bitwise_and(color_image,color_image, mask= mask)
             cv2.addWeighted(color_mask, 1, color_image, 1, 0, color_image)
@@ -505,8 +525,8 @@ class ShellGame(object):
                 area = cv2.contourArea(contour)
                 if (area > 50):
                     green_found = True
-                    # x, y, w, h = cv2.boundingRect(contour)
-                    # cv2.rectangle(color_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                    x, y, w, h = cv2.boundingRect(contour)
+                    cv2.rectangle(color_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
                     print("I found green!")
 
             cv2.imshow("Video",color_image)
@@ -553,8 +573,8 @@ class ShellGame(object):
             # Receive and process new image data if timer has expired
             start = time.time()
             if (start-triggerTime >= 0.1):
-                colfil1 = np.array([0, 0, 100])
-                colfil2 = np.array([50, 50, 255]) #currently red
+                colfil1 = np.array([0, 0, 800])
+                colfil2 = np.array([0, 0, 255]) #currently red
                 mask = cv2.inRange(color_image, colfil1, colfil2)
                 color_mask = cv2.bitwise_and(color_image,color_image, mask= mask)
                 cv2.addWeighted(color_mask, 1, color_image, 1, 0, color_image)
@@ -682,40 +702,45 @@ def main():
         pipeline.start(config)
         
         input("============ Press `Enter` to assume initial pose goal ...")
-        ezMoney.go_to_initial_goal()
+        # ezMoney.go_to_initial_goal()
+        # input()
+        # ezMoney.look_to_camera()
+        # input()
+        # ezMoney.go_to_initial_goal()
         
         input("============ Press `Enter` to begin control ...")
         
         # Full scanning
-        ezMoney.move_short_goal(0.20)
+        # ezMoney.move_short_goal(0.20)
         object_locations = ezMoney.scan_for_objects(pipeline, 3)
         print('Scan Complete!')
         print(object_locations)
         
-        # Scan each bowl
-        ezMoney.move_tall_goal(0.20)
-        delay = 3
-        greens = []
-        for location in object_locations:
-            delayTime = time.time()
-            ezMoney.move_rel_location(location[0], location[1])
-            ezMoney.move_to_object(pipeline)
-            ezMoney.move_left_goal(0.033)
-            ezMoney.move_down_goal(0.02)
-            greens.append(ezMoney.scan_for_green())
-            # localize
-        ezMoney.move_short_goal(0.20)
+        # # Scan each bowl
+        # ezMoney.move_tall_goal(0.20)
+        # delay = 3
+        # greens = []
+        # for location in object_locations:
+        #     delayTime = time.time()
+        #     ezMoney.move_rel_location(location[0], location[1])
+        #     ezMoney.move_to_object(pipeline)
+        #     ezMoney.move_left_goal(0.033)
+        #     ezMoney.move_down_goal(0.02)
+        #     greens.append(ezMoney.scan_for_green(pipeline))
+        #     ezMoney.go_to_initial_goal()
+        #     # localize
+        # ezMoney.move_short_goal(0.20)
         
-        # picks correct bowl
-        for i in range(greens):
-            if greens[i] == True:
-                ezMoney.go_to_initial_goal()
-                ezMoney.move_rel_location(object_locations[i][0], object_locations[i][1])
-                ezMoney.move_to_object(pipeline)
-                ezMoney.pick()
+        # # picks correct bowl
+        # for i in range(len(greens)):
+        #     if greens[i] == True:
+        #         ezMoney.go_to_initial_goal()
+        #         ezMoney.move_rel_location(object_locations[i][0], object_locations[i][1])
+        #         ezMoney.move_to_object(pipeline)
+        #         ezMoney.pick()
         
-        input("============ Press `Enter` to return to initial position ...")
-        ezMoney.go_to_initial_goal()
+        # input("============ Press `Enter` to return to initial position ...")
+        # ezMoney.go_to_initial_goal()
 
         cv2.destroyAllWindows() 
         
