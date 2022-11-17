@@ -6,7 +6,7 @@ The goal of this project was to give a UR3 manipulator the ability to play a mod
 Here, we present an alternative formation of this game, in which you, the human player, act as gamemaster and a robot must guess the location of the item after the shells have been shuffled. The robot does not watch the shuffling, meaning it may appear to make its choices randomly, giving the player a 2/3 chance of winning, meaning the formulation of the game in this way not only puts power in the player's hands to shuffle, but also doubles their random chance of winning. However, to preserve the deceptive nature of the game, the human handler of the robot marks the target bowl discretely, allowing the robot to accurately detect the correct bowl using its perceptive abilities and win money from unsuspecting players.
 
 
-https://user-images.githubusercontent.com/99771915/202348599-81c0b833-6eca-4082-be7f-1034f2cbd8e7.mp4
+<!--https://user-images.githubusercontent.com/99771915/202348599-81c0b833-6eca-4082-be7f-1034f2cbd8e7.mp4-->
 
 ---
 
