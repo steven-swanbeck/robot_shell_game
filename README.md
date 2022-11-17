@@ -55,9 +55,27 @@ catkin_make
 ```console
 source devel/setup.bash
 ```
+8. Install remaining Python dependencies:
+```console
+pip install -r requirements.txt
+```
+---
+## Demo You Could Run Now
+The shell game requires an Intel RealSense camera and all of our other harware and parts to reproduce, so we're providing a simualted demo that works with most webcams using hand tracking. To run it, please run:
+```console
+roslaunch ur_moveit_config demo.launch
+```
+Open and source another terminal, then run:
+```console
+rosrun ur_scripts hand_tracking.py
+```
+You should then be able to reproduce results similar to those shown below.
+
+[HandTrack.webm](https://user-images.githubusercontent.com/99771915/202353380-6606532c-889d-4f19-9824-c336622b92ac.webm)
+
 ---
 
-## Demo with Real UR3
+## Full Shell Game Demo with Real UR3
 
 https://user-images.githubusercontent.com/99771915/202349276-863eb793-f228-4302-8dc6-286ca12326e9.mov
 
