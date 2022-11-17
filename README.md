@@ -61,7 +61,7 @@ pip install -r requirements.txt
 ```
 ---
 ## Demo You Could Run Now
-The shell game requires an Intel RealSense camera and all of our other harware and parts to reproduce, so we're providing a simualted demo that works with most webcams using hand tracking. To run it, please run:
+The shell game requires an Intel RealSense camera and all of our other harware and parts to reproduce, so we're providing a simualted demo that works with most webcams using hand tracking to control the end-effector position of the UR3. To run it, use:
 ```console
 roslaunch ur_moveit_config demo.launch
 ```
