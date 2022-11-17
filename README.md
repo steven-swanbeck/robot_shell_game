@@ -76,6 +76,7 @@ You should then be able to reproduce results similar to those shown below.
 ---
 
 ## Full Shell Game Demo with Real UR3
+The full demo uses shell_game.py, located within the src folder of the ur_scripts package.
 
 https://user-images.githubusercontent.com/99771915/202349276-863eb793-f228-4302-8dc6-286ca12326e9.mov
 
