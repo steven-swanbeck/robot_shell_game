@@ -702,45 +702,43 @@ def main():
         pipeline.start(config)
         
         input("============ Press `Enter` to assume initial pose goal ...")
-        # ezMoney.go_to_initial_goal()
-        # input()
-        # ezMoney.look_to_camera()
-        # input()
-        # ezMoney.go_to_initial_goal()
+        ezMoney.go_to_initial_goal()
+        input()
+        ezMoney.look_to_camera()
+        input()
+        ezMoney.go_to_initial_goal()
         
         input("============ Press `Enter` to begin control ...")
         
         # Full scanning
-        # ezMoney.move_short_goal(0.20)
+        ezMoney.move_short_goal(0.20)
         object_locations = ezMoney.scan_for_objects(pipeline, 3)
         print('Scan Complete!')
         print(object_locations)
         
-        # # Scan each bowl
-        # ezMoney.move_tall_goal(0.20)
-        # delay = 3
-        # greens = []
-        # for location in object_locations:
-        #     delayTime = time.time()
-        #     ezMoney.move_rel_location(location[0], location[1])
-        #     ezMoney.move_to_object(pipeline)
-        #     ezMoney.move_left_goal(0.033)
-        #     ezMoney.move_down_goal(0.02)
-        #     greens.append(ezMoney.scan_for_green(pipeline))
-        #     ezMoney.go_to_initial_goal()
-        #     # localize
-        # ezMoney.move_short_goal(0.20)
+        # Scan each bowl
+        ezMoney.move_tall_goal(0.20)
+        delay = 3
+        greens = []
+        for location in object_locations:
+            delayTime = time.time()
+            ezMoney.move_rel_location(location[0], location[1])
+            ezMoney.move_to_object(pipeline)
+            ezMoney.move_left_goal(0.033)
+            ezMoney.move_down_goal(0.02)
+            greens.append(ezMoney.scan_for_green(pipeline))
+            ezMoney.go_to_initial_goal()
         
-        # # picks correct bowl
-        # for i in range(len(greens)):
-        #     if greens[i] == True:
-        #         ezMoney.go_to_initial_goal()
-        #         ezMoney.move_rel_location(object_locations[i][0], object_locations[i][1])
-        #         ezMoney.move_to_object(pipeline)
-        #         ezMoney.pick()
+        # picks correct bowl
+        for i in range(len(greens)):
+            if greens[i] == True:
+                ezMoney.go_to_initial_goal()
+                ezMoney.move_rel_location(object_locations[i][0], object_locations[i][1])
+                ezMoney.move_to_object(pipeline)
+                ezMoney.pick()
         
-        # input("============ Press `Enter` to return to initial position ...")
-        # ezMoney.go_to_initial_goal()
+        input("============ Press `Enter` to return to initial position ...")
+        ezMoney.go_to_initial_goal()
 
         cv2.destroyAllWindows() 
         

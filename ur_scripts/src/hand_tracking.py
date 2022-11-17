@@ -7,10 +7,8 @@ import rospy
 import moveit_commander
 import geometry_msgs
 from std_msgs.msg import String
-import moveit_msgs.msg
 
 import cv2
-import os
 from imutils.video import VideoStream
 import time
 import mediapipe as mp
