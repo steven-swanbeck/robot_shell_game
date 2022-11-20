@@ -27,7 +27,7 @@ mkdir -p catkin_ws/src && cd catkin_ws
 ```
 2. Clone the contents of this repository:
 ```console
-git clone https://github.com/steven-swanbeck/ur3_calculator.git src/lightning_talk
+git clone https://github.com/steven-swanbeck/robot_shell_game.git src/final_project
 ```
 3. Clone the UR Robots ROS Driver:
 ```console
