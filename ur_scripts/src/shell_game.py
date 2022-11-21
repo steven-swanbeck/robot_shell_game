@@ -17,36 +17,12 @@ import argparse
 
 
 
-# # ####################################################################################
-# # define names of each possible ArUco tag OpenCV supports
-# ARUCO_DICT = {
-# 	"DICT_4X4_50": cv2.aruco.DICT_4X4_50,
-# 	"DICT_4X4_100": cv2.aruco.DICT_4X4_100,
-# 	"DICT_4X4_250": cv2.aruco.DICT_4X4_250,
-# 	"DICT_4X4_1000": cv2.aruco.DICT_4X4_1000,
-# 	"DICT_5X5_50": cv2.aruco.DICT_5X5_50,
-# 	"DICT_5X5_100": cv2.aruco.DICT_5X5_100,
-# 	"DICT_5X5_250": cv2.aruco.DICT_5X5_250,
-# 	"DICT_5X5_1000": cv2.aruco.DICT_5X5_1000,
-# 	"DICT_6X6_50": cv2.aruco.DICT_6X6_50,
-# 	"DICT_6X6_100": cv2.aruco.DICT_6X6_100,
-# 	"DICT_6X6_250": cv2.aruco.DICT_6X6_250,
-# 	"DICT_6X6_1000": cv2.aruco.DICT_6X6_1000,
-# 	"DICT_7X7_50": cv2.aruco.DICT_7X7_50,
-# 	"DICT_7X7_100": cv2.aruco.DICT_7X7_100,
-# 	"DICT_7X7_250": cv2.aruco.DICT_7X7_250,
-# 	"DICT_7X7_1000": cv2.aruco.DICT_7X7_1000,
-# 	"DICT_ARUCO_ORIGINAL": cv2.aruco.DICT_ARUCO_ORIGINAL,
-# 	"DICT_APRILTAG_16h5": cv2.aruco.DICT_APRILTAG_16h5,
-# 	"DICT_APRILTAG_25h9": cv2.aruco.DICT_APRILTAG_25h9,
-# 	"DICT_APRILTAG_36h10": cv2.aruco.DICT_APRILTAG_36h10,
-# 	"DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
-# }
-# # ###################################################################################
-
 class ShellGame(object):
     
     def __init__(self):
+    # ##########################################################################
+    # INITIALIZING MOVEIT + SOME VARIABLES
+    # ##########################################################################    
         super(ShellGame, self).__init__()
 
         moveit_commander.roscpp_initialize(sys.argv)
@@ -84,6 +60,7 @@ class ShellGame(object):
         
     # ##########################################################################
     # LOW LEVEL MOVEMENT FUNCTIONS
+    # These functions are used as their name describes - when called, they move the robot arm in a cartesian direction, or towards a specific goal pose. 
     # ########################################################################## 
     def move_left(self, scale=0.05, zscale=0.1):
         move_group = self.move_group
@@ -347,15 +324,15 @@ class ShellGame(object):
     
     # ##########################################################################
     # HIGH LEVEL PERCEPTION AND MOVEMENT FUNCTIONS 
+    # Finds and records locations of all bowls within scene
     # ##########################################################################
-    # Finds and localizes all bowls within scene
     def scan_for_objects(self, pipeline, target_number):
-        # needs to be completed
         continue_flag = True
         triggerTime = time.time()
         startTime = time.time()
         waitTime = 3
         while continue_flag:
+            #Grab frames from RealSense D435i
             frames = pipeline.wait_for_frames()
             depth_frame = frames.get_depth_frame()
             color_frame = frames.get_color_frame()
@@ -364,18 +341,20 @@ class ShellGame(object):
             depth_image = np.asanyarray(depth_frame.get_data())
             color_image = np.asanyarray(color_frame.get_data())
 
-            # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
+            # Apply colormap on depth image for depth visualization
             depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
             depth_colormap_dim = depth_colormap.shape
             color_colormap_dim = color_image.shape
 
             start = time.time()
             if (start-triggerTime >= 0.1):
+                #Create a color filter to apply to the image. The one below sorts for BGR values in the range of (0,0,80) to (60,60,255); essentially, a semi-light-independent search for the red shells.
                 colfil1 = np.array([0, 0, 80])
-                colfil2 = np.array([60, 60, 255]) #currently red
+                colfil2 = np.array([60, 60, 255]) 
                 mask = cv2.inRange(color_image, colfil1, colfil2)
                 color_mask = cv2.bitwise_and(color_image,color_image, mask= mask)
                 cv2.addWeighted(color_mask, 1, color_image, 1, 0, color_image)
+                #Create OpenCV contours around any red objects found above.
                 contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
                 lmList = [300, 250]
@@ -385,9 +364,10 @@ class ShellGame(object):
                 for pic, contour in enumerate(contours): # extend this to create matrix or lists, track initial positon to estimate location in scene and store objects
                     # if counter == 0:
                     area = cv2.contourArea(contour)
+                    #Filter out any small objects with area less than 5000 pixels - this stops small segments of a shell or other small objects in the environment from being localized to.
                     if (area > 5000):
                         x, y, w, h = cv2.boundingRect(contour)
-                        # cv2.rectangle(qcolor_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                        # cv2.rectangle(qcolor_image, (x, y), (x + w, y + h), (0, 0, 255), 2) #Deprecated rectangle
                         lmList = [int(x + w/2), int(y + h/2)]
 
                         bounded_contours.append([x, y, w, h])
@@ -399,7 +379,7 @@ class ShellGame(object):
                 for i in range(len(bounded_contours)):
                     contour_check[i] = True
 
-                # Looking for overlaps in contours
+                # Looking for overlaps in contours. If there are overlaps in contours, combine them to ensure that each shell receives only one contour. 
                 for i in range(len(bounded_contours)):
                     if contour_check[i] == True:
                         current_box = bounded_contours[i]
@@ -416,7 +396,7 @@ class ShellGame(object):
                                 contour_check[j] = False
                         final_contours.append(current_box)
 
-                # remove any encircled contours
+                # Looking for contours entirely contained in other contours. Removing them. 
                 final_contours2 = []
                 for i in range(len(final_contours)):
                     for j in range(len(final_contours)):
@@ -427,7 +407,7 @@ class ShellGame(object):
 
                 largest_contours = final_contours2
 
-                # Selecting three largest regions (put in if statement to see if we have more than three contours)
+                # Selecting three largest regions (future work can account for situations with more or less than 3 shells)
                 largest_areas = [0, 0, 0]
                 largest_contours = [[], [], []]
                 for contour in bounded_contours:
@@ -441,10 +421,10 @@ class ShellGame(object):
                         largest_areas[0] = contour[2] * contour[3]
                         largest_contours[0] = contour
 
-                # storing positions
+            
                 stored_pixels = []
                 stored_positions = []
-
+                # Storing positions in the form of pixel location as well as (x,y) coordinates, in meters, with respect to the camera's center as an origin. 
                 for contour in largest_contours:
                     try:
                         cv2.rectangle(color_image, (contour[0], contour[1]), (contour[0] + contour[2], contour[1] + contour[3]), (255, 0, 0), 2)
@@ -457,13 +437,15 @@ class ShellGame(object):
                     return stored_positions
 
 
-                # for contour in bounded_contours:
+                # Draws the contours. Exception handling to solve outlier cases.
                 try:
                     for contour in largest_contours:
                         cv2.rectangle(color_image, (contour[0], contour[1]), (contour[0] + contour[2], contour[1] + contour[3]), (255, 0, 0), 2)
                 except IndexError:
                     pass
 
+
+                # Initializes the "safe" cube in which the arm will not move. When a shell is detected to be outside of the cube, the robot arm will move to correct it. 
                 bounds = [295, 245, 305, 255]
                 depth_limits = [-0.01, 0.01]
                 cv2.rectangle(color_image, (bounds[0], bounds[1]), (bounds[2], bounds[3]), (0, 255, 0), 2)
@@ -488,7 +470,7 @@ class ShellGame(object):
         movement_complete = False
         iterations = 0
         while not movement_complete:
-            # Check iteration to see which movement to produce
+            # Check iteration to see which movement to produce. Future work can see TVFs replace this section. 
             if iterations == 0:
                 self.scan_movement_up()
             elif iterations == 1:
@@ -514,20 +496,24 @@ class ShellGame(object):
             # Take in new camera frame
             # start = time.time()
             # if (start-triggerTime >= 0.1):
+
+
+            #Create a color filter to apply to the image. The one below sorts for the green mark.
             colfil1 = np.array([50, 50, 0])
-            colfil2 = np.array([200, 255, 20]) #currently green
+            colfil2 = np.array([200, 255, 20]) 
             mask = cv2.inRange(color_image, colfil1, colfil2)
             color_mask = cv2.bitwise_and(color_image,color_image, mask= mask)
             cv2.addWeighted(color_mask, 1, color_image, 1, 0, color_image)
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            
+            #Same as shell searching, but smaller area
             for pic, contour in enumerate(contours):
                 area = cv2.contourArea(contour)
                 if (area > 50):
                     green_found = True
                     x, y, w, h = cv2.boundingRect(contour)
                     cv2.rectangle(color_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
-                    print("I found green!")
+                    print("I found green!") #Sanity check
+                    
 
             cv2.imshow("Video",color_image)
             cv2.waitKey(1)
@@ -573,7 +559,7 @@ class ShellGame(object):
             # Receive and process new image data if timer has expired
             start = time.time()
             if (start-triggerTime >= 0.1):
-                colfil1 = np.array([0, 0, 800])
+                colfil1 = np.array([0, 0, 80])
                 colfil2 = np.array([0, 0, 255]) #currently red
                 mask = cv2.inRange(color_image, colfil1, colfil2)
                 color_mask = cv2.bitwise_and(color_image,color_image, mask= mask)
