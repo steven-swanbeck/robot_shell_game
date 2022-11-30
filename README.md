@@ -57,7 +57,9 @@ source devel/setup.bash
 ```
 8. Install remaining Python dependencies:
 ```console
+cd src/final_project
 pip install -r requirements.txt
+cd ../../
 ```
 ---
 ## Demo You Could Run Now
