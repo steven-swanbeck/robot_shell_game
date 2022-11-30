@@ -161,7 +161,7 @@ catkin_install_python(PROGRAMS
 )
 
 catkin_install_python(PROGRAMS
-  src/face.py
+  src/hand_tracking.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -181,7 +181,7 @@ catkin_install_python(PROGRAMS
 )
 
 catkin_install_python(PROGRAMS
-  src/color_depth.py
+  src/shell_game.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
