@@ -18,26 +18,32 @@ Here, we present an alternative formation of this game, in which you, the human 
 ---
 
 ## Requirements, Dependencies, and Building
-These packages are built and tested on a system running ROS1 noetic on Ubuntu 20.04. Users are assumed to already have ROS noetic installed on a machine running Ubuntu 20.04 to execute this demonstration. Details of ROS installation can be found on the [ROS Tutorials](http://wiki.ros.org/ROS/Tutorials) webpage.
+These packages are built and tested on a system running ROS1 Noetic on Ubuntu 20.04. Users are assumed to already have ROS Noetic installed on a machine running Ubuntu 20.04 to execute this demonstration. Details of ROS installation can be found on the [ROS Tutorials](http://wiki.ros.org/ROS/Tutorials) webpage.
 
-Use of these packages in a non-simulated environment requires the use of the official [Universal Robots ROS Drivers](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver).   
-1. Create a Catkin workspace:
+Use of these packages in a non-simulated environment also requires the use of the official [Universal Robots ROS Drivers](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver), the download of which is included in the following steps.
+
+Begin by opening a new terminal. Then,
+1. Source ROS setup if necessary:
+```console
+source /opt/ros/noetic/setup.bash
+```
+2. Create a Catkin workspace:
 ```console
 mkdir -p catkin_ws/src && cd catkin_ws
 ```
-2. Clone the contents of this repository:
+3. Clone the contents of this repository:
 ```console
 git clone https://github.com/steven-swanbeck/robot_shell_game.git src/final_project
 ```
-3. Clone the UR Robots ROS Driver:
+4. Clone the UR Robots ROS Driver:
 ```console
 git clone https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git src/Universal_Robots_ROS_Driver
 ```
-4. And the associated description packages:
+5. And the associated description packages:
 ```console
 git clone -b melodic-devel-staging https://github.com/ros-industrial/universal_robot.git src/universal_robot
 ```
-5. Install all package dependencies:
+6. Install all package dependencies:
 ```console
 sudo apt update -qq
 ```
@@ -47,23 +53,25 @@ rosdep update
 ```console
 rosdep install --from-paths src --ignore-src -r -y
 ```
-6. Make the workspace:
+7. Make the workspace:
 ```console
 catkin_make
 ```
-7. Source the workspace:
+8. Source the workspace:
 ```console
 source devel/setup.bash
 ```
-8. Install remaining Python dependencies:
+9. Install remaining Python dependencies using included text file:
 ```console
-cd src/final_project
-pip install -r requirements.txt
-cd ../../
+pip install -r src/final_project/requirements.txt
 ```
 ---
-## Demo You Could Run Now
-The shell game requires an Intel RealSense camera and all of our other harware and parts to reproduce, so we're providing a simualted demo that works with most webcams using hand tracking to control the end-effector position of the UR3. To run it, use:
+## Hand Tracking Simulated Demo You Could Run Now
+The shell game requires a UR3 robot, an Intel RealSense camera, and all of our other hardware and parts to reproduce, so we're providing a simulated demo that works with most webcams using MediaPipe's hand tracking to control the end-effector position of the UR3. The demo is designed to track the tip of the user's index finger, moving the robot as the user moves their finger about the frame. A central 'safe zone' is overlaid on the video feed as a green rectangle. Movement of the finger within this box will not produce any movement of the simulated UR3, but as the user moves their finger outside this box, the robot will begin to move in that direction, with a proportional control input relative to the distance from the safe zone determining the size of the step in end-effector position. 
+
+Because the tracking and movement commanding codes were implemented in a single Python script (to reduce the use of ROS as much as possible), the user will observe the camera feed freezing once a movement update is received from the hand tracking. This makes use of the system by an individual clunky, but for the ultimate use case of moving to target objects in a scene in which the camera is attached to the robot, this is an effective solution. 
+
+To run the demo, start by opening a new temrinal window and sourcing the worksapce. Then run:
 ```console
 roslaunch ur_moveit_config demo.launch
 ```
@@ -77,7 +85,7 @@ You should then be able to reproduce results similar to those shown below.
 
 ---
 
-## Full Shell Game Demo with Real UR3
+## Full Shell Game Demo with Real UR3, Intel RealSense Camera, and the Rest of Our Created Hardware
 The full demo uses shell_game.py, located within the src folder of the ur_scripts package.
 
 https://user-images.githubusercontent.com/99771915/202349276-863eb793-f228-4302-8dc6-286ca12326e9.mov
